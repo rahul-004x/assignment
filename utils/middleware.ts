@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "../model/user";
 
 // Extend Express Request type to include user property
@@ -10,11 +10,6 @@ declare global {
     }
   }
 }
-
-type DecodedToken = {
-  id: string;
-  name: string;
-};
 
 const getTokenFrom = (req: Request) => {
   const authorization = req.get("Authorization");
@@ -37,14 +32,14 @@ const userExtractor = async (
     });
   }
   try {
-    const decodedToken = jwt.verify(token, process.env.SECRET!) as DecodedToken;
-    if (!decodedToken.id) {
+    const { id } = jwt.verify(token, process.env.SECRET!) as JwtPayload;
+    if (!id) {
       return res.status(401).json({
         success: false,
         error: "Invalid token",
       });
     }
-    const user = await User.findById(decodedToken.id);
+    const user = await User.findById(id);
     if (!user) {
       return res.status(401).json({
         success: false,
